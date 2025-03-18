@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>K!nd4ASSISTANT</title>
+
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="top-bar.css">
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="/elements.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,100..700;1,100..700&family=Tiny5&display=swap');
+
+        main {
+            margin-top: 78px;
+            height: calc(100vh - 78px);
+
+            display: flex;
+            flex-direction: row;
+            justify-content: space-around;
+        }
+
+        main > #chat {
+            display: flex;
+            flex-direction: column-reverse;
+
+            background-color: #ffe7e3;
+
+            margin: 32px 0;
+            width: 800px;
+            box-shadow: 12px 12px 0 0 transparent,
+            24px 12px 0 0 #010a0f,
+            12px 24px 0 0 #010a0f,
+            24px 24px 0 0 transparent,
+            -12px 12px 0 0 transparent,
+            -24px 12px 0 0 #010a0f,
+            -12px 24px 0 0 #010a0f,
+            -24px 24px 0 0 transparent,
+            12px -12px 0 0 transparent,
+            24px -12px 0 0 #010a0f,
+            12px -24px 0 0 #010a0f,
+            24px -24px 0 0 transparent,
+            -12px -12px 0 0 transparent,
+            -24px -12px 0 0 #010a0f,
+            -12px -24px 0 0 #010a0f,
+            -24px -24px 0 0 transparent;
+
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+
+        main > #chat > #input {
+            display: flex;
+            flex-direction: row;
+
+            height: auto;
+            margin: 12px;
+
+            box-shadow: 4px 4px 0 0 transparent,
+            8px 4px 0 0 #010a0f,
+            4px 8px 0 0 #010a0f,
+            8px 8px 0 0 transparent,
+            -4px 4px 0 0 transparent,
+            -8px 4px 0 0 #010a0f,
+            -4px 8px 0 0 #010a0f,
+            -8px 8px 0 0 transparent,
+            4px -4px 0 0 transparent,
+            8px -4px 0 0 #010a0f,
+            4px -8px 0 0 #010a0f,
+            8px -8px 0 0 transparent,
+            -4px -4px 0 0 transparent,
+            -8px -4px 0 0 #010a0f,
+            -4px -8px 0 0 #010a0f,
+            -8px -8px 0 0 transparent;
+        }
+
+        main > #chat > #input > textarea {
+            background: transparent;
+            border: none;
+            outline: none;
+            resize: none;
+
+            width: 90%;
+            max-height: 400px;
+
+            font-family: "IBM Plex Sans", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
+            font-variation-settings: "wdth" 100;
+            font-size: 18px;
+
+            scrollbar-width: none;
+        }
+
+        main > #chat > #input > #send-button {
+            width: 10%;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+
+            text-align: center;
+
+            font-family: "Tiny5", sans-serif;
+            font-weight: 400;
+            font-style: normal;
+            font-size: 22px;
+
+            cursor: pointer;
+            user-select: none;
+        }
+
+        main > #chat > #input > #send-button.disabled {
+            cursor: auto;
+            color: #777;
+        }
+
+        main > #chat > .message {
+            display: flex;
+            flex-direction: row;
+
+            user-select: none;
+        }
+
+        main > #chat > .message > .sent {
+            margin-left: auto;
+            justify-self: end;
+        }
+
+        main > #chat > .message > .received {
+            margin-right: auto;
+            justify-self: start;
+        }
+
+        main > #chat > .message > div {
+            max-width: 50%;
+
+            box-shadow: 4px 4px 0 0 transparent,
+            8px 4px 0 0 #010a0f,
+            4px 8px 0 0 #010a0f,
+            8px 8px 0 0 transparent,
+            -4px 4px 0 0 transparent,
+            -8px 4px 0 0 #010a0f,
+            -4px 8px 0 0 #010a0f,
+            -8px 8px 0 0 transparent,
+            4px -4px 0 0 transparent,
+            8px -4px 0 0 #010a0f,
+            4px -8px 0 0 #010a0f,
+            8px -8px 0 0 transparent,
+            -4px -4px 0 0 transparent,
+            -8px -4px 0 0 #010a0f,
+            -4px -8px 0 0 #010a0f,
+            -8px -8px 0 0 transparent;
+
+            font-family: "IBM Plex Sans", sans-serif;
+            font-optical-sizing: auto;
+            font-weight: 400;
+            font-style: normal;
+            font-variation-settings: "wdth" 100;
+            font-size: 18px;
+
+            margin: 12px;
+            padding: 8px;
+
+            overflow: hidden;
+        }
+        main > #chat > .message > div > * {
+            margin: 0;
+        }
+        main > #chat > .message > div * {
+            word-break: break-word;
+            white-space: normal;
+        }
+
+        #miku {
+            display: flex;
+            flex-direction: column-reverse;
+
+            margin: 32px 0;
+        }
+
+        #miku > #sprite {
+            width: 640px;
+            height: 640px;
+            overflow: hidden;
+            image-rendering: pixelated;
+            background-position: -0px 0;
+        }
+
+        @keyframes idle {
+            100% {
+                background-position: -1920px 0;
+            }
+        }
+
+        #miku > #sprite.idle {
+            background: transparent url('/src/miku-idle.png') 0 0 no-repeat;
+            background-size: auto 100%;
+            animation: idle 1.5s steps(3) infinite;
+        }
+
+        @keyframes dancing {
+            100% {
+                background-position: -2560px 0;
+            }
+        }
+
+        #miku > #sprite.dancing {
+            background: transparent url('/src/miku-dancing.png') 0 0 no-repeat;
+            background-size: auto 100%;
+            animation: dancing 0.75s steps(4) infinite;
+        }
+
+        @keyframes waiting {
+            0% {
+                background-position: -1920px 0;
+            }
+            100% {
+                background-position: -4480px 0;
+            }
+        }
+
+        #miku > #sprite.waiting {
+            background: transparent url('/src/miku-waiting.png') 0 0 no-repeat;
+            background-size: auto 100%;
+            animation: waiting 1.5s steps(4) infinite;
+        }
+
+        @keyframes reading {
+            100% {
+                background-position: -2560px 0;
+            }
+        }
+
+        #miku > #sprite.reading {
+            background: transparent url('/src/miku-reading.png') 0 0 no-repeat;
+            background-size: auto 100%;
+            animation: reading 1s steps(4) infinite;
+        }
+
+        @keyframes typing-happy {
+            100% {
+                background-position: -2560px 0;
+            }
+        }
+
+        #miku > #sprite.typing-happy {
+            background: transparent url('/src/miku-typing-happy.png') 0 0 no-repeat;
+            background-size: auto 100%;
+            animation: typing-happy 0.75s steps(4) infinite;
+        }
+
+        @keyframes typing-interested {
+            100% {
+                background-position: -2560px 0;
+            }
+        }
+
+        #miku > #sprite.typing-interested {
+            background: transparent url('/src/miku-typing-interested.png') 0 0 no-repeat;
+            background-size: auto 100%;
+            animation: typing-interested 0.75s steps(4) infinite;
+        }
+
+        @keyframes typing-angry {
+            100% {
+                background-position: -2560px 0;
+            }
+        }
+
+        #miku > #sprite.typing-angry {
+            background: transparent url('/src/miku-typing-angry.png') 0 0 no-repeat;
+            background-size: auto 100%;
+            animation: typing-angry 0.75s steps(4) infinite;
+        }
+    </style>
+</head>
+<body>
+
+<div id="top-bar">
+    <h3>K!nd4ASSISTANT</h3>
+    <div id="voice-enabled" class="muted" title="Toggle Miku sound.">
+        <svg class="unmuted-svg" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+             fill="#e3e3e3">
+            <path d="M560-131v-82q90-26 145-100t55-168q0-94-55-168T560-749v-82q124 28 202 125.5T840-481q0 127-78 224.5T560-131ZM120-360v-240h160l200-200v640L280-360H120Zm440 40v-322q47 22 73.5 66t26.5 96q0 51-26.5 94.5T560-320ZM400-606l-86 86H200v80h114l86 86v-252ZM300-480Z"/>
+        </svg>
+        <svg class="muted-svg" xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px"
+             fill="#e3e3e3">
+            <path d="M792-56 671-177q-25 16-53 27.5T560-131v-82q14-5 27.5-10t25.5-12L480-368v208L280-360H120v-240h128L56-792l56-56 736 736-56 56Zm-8-232-58-58q17-31 25.5-65t8.5-70q0-94-55-168T560-749v-82q124 28 202 125.5T840-481q0 53-14.5 102T784-288ZM650-422l-90-90v-130q47 22 73.5 66t26.5 96q0 15-2.5 29.5T650-422ZM480-592 376-696l104-104v208Zm-80 238v-94l-72-72H200v80h114l86 86Zm-36-130Z"/>
+        </svg>
+    </div>
+</div>
+
+<main>
+    <div id="chat">
+        <div id="input">
+            <textarea disabled></textarea>
+            <div id="send-button" class="disabled">Send</div>
+        </div>
+        <!--
+        <div class="message">
+            <div class="sent">
+                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Harum iusto necessitatibus quae quidem vel veritatis vero. Atque consequatur omnis quibusdam.
+            </div>
+        </div>
+        <div class="message">
+            <div class="received">
+                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Harum iusto necessitatibus quae quidem vel veritatis vero. Atque consequatur omnis quibusdam.
+            </div>
+        </div>
+        -->
+    </div>
+    <div id="miku">
+        <div id="sprite" class="reading"></div>
+    </div>
+</main>
+
+<script src="/resize-textarea.js"></script>
+<script src="/script.js"></script>
+
+</body>
+</html>

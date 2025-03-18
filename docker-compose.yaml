@@ -16,6 +16,15 @@ services:
       - CONTEXT_LENGTH=65536
     restart: unless-stopped
 
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+    restart: unless-stopped
+
   caddy:
     image: caddy:2
     ports:
