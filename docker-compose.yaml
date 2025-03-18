@@ -18,3 +18,7 @@ services:
       - backend
       - frontend
     restart: unless-stopped
+
+  tts:
+    image: ghcr.io/coqui-ai/tts-cpu
+    entrypoint: /bin/bash -c "python TTS/server/server.py --model_name tts_models/en/jenny/jenny"
