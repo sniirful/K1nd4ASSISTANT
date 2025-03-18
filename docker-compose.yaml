@@ -5,5 +5,17 @@ services:
     build:
       context: ./backend
     restart: unless-stopped
+
+  caddy:
+    image: caddy:2
     ports:
       - "8000:8000"
+      - "81:80"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./caddy_data:/data
+      - ./caddy_config:/config
+    depends_on:
+      - backend
+      - frontend
+    restart: unless-stopped
